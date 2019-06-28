@@ -1,36 +1,31 @@
-## react-native-orientation
-Listen to device orientation changes in react-native and set preferred orientation on screen to screen basis.
+## React Native Orientation
+[![npm version](https://badge.fury.io/js/react-native-orientation.svg)](https://badge.fury.io/js/react-native-orientation)
 
-### Installation
+Listen to device orientation changes in React Native applications and programmatically set preferred orientation on a per screen basis. Works on both Android and iOS.
 
-#### via rnpm
+## Installing
 
-Run `rnpm install react-native-orientation`
+```
+npm install react-native-orientation --save
+```
 
-> Note: rnpm will install and link the library automatically.
+## Linking Native Dependencies
 
-#### via npm
+### Automatic Linking
 
-Run `npm install react-native-orientation --save`
+```
+react-native link react-native-orientation
+```
 
-### Linking
+Please note that you **still need to manually configure** a couple files even when using automatic linking. Please see the ['Configuration'](#configuration) section below. You will also **need to restart your simulator** before the package will work properly.
 
-#### Using rnpm (iOS + Android)
-
-`rnpm link react-native-orientation`
-
-#### Using [CocoaPods](https://cocoapods.org) (iOS Only)
-
-`pod 'react-native-orientation', :path => 'node_modules/react-native-orientation'`
-
-Consult the React Native documentation on how to [install React Native using CocoaPods](https://facebook.github.io/react-native/docs/embedded-app-ios.html#install-react-native-using-cocoapods).
-
-#### Manually
+### Manual Linking
 
 **iOS**
 
 1. Add `node_modules/react-native-orientation/iOS/RCTOrientation.xcodeproj` to your xcode project, usually under the `Libraries` group
-1. Add `libRCTOrientation.a` (from `Products` under `RCTOrientation.xcodeproj`) to build target's `Linked Frameworks and Libraries` list
+2. Add `libRCTOrientation.a` (from `Products` under `RCTOrientation.xcodeproj`) to build target's `Linked Frameworks and Libraries` list
+3. Add `$(SRCROOT)/node_modules/react-native-orientation/iOS/RCTOrientation/` to `Project Name` -> `Build Settings` -> `Header Search Paths`
 
 
 **Android**
@@ -53,9 +48,9 @@ Consult the React Native documentation on how to [install React Native using Coc
     }
     ```
 
-3. Register module (in MainApplication.java)
+3. Register module in `MainApplication.java`
 
-    ```
+    ```java
     import com.github.yamill.orientation.OrientationPackage;  // <--- import
 
     public class MainApplication extends Application implements ReactApplication {
@@ -76,7 +71,7 @@ Consult the React Native documentation on how to [install React Native using Coc
 
 ### Configuration
 
-#### iOS
+**iOS**
 
 Add the following to your project's `AppDelegate.m`:
 
@@ -87,18 +82,19 @@ Add the following to your project's `AppDelegate.m`:
 
   // ...
 
-  - (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
-    return [Orientation getOrientation];
-  }
+- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+  return [Orientation getOrientation];
+}
+  
 
 @end
 ```
 
-#### Android
+**Android**
 
-Implement onConfigurationChanged method (in MainActivity.java)
+Implement `onConfigurationChanged` method in `MainActivity.java`
 
-```
+```java
     import android.content.Intent; // <--- import
     import android.content.res.Configuration; // <--- import
 
@@ -119,79 +115,107 @@ Implement onConfigurationChanged method (in MainActivity.java)
 
 ## Usage
 
-Whenever you want to use it within React Native code now you can:
-`var Orientation = require('react-native-orientation');`
+To use the `react-native-orientation` package in your codebase, you should use the Orientation module:
+```javascript
+import Orientation from 'react-native-orientation';
+```
 
 ```javascript
-  _orientationDidChange: function(orientation) {
-    if (orientation == 'LANDSCAPE') {
-      //do something with landscape layout
-    } else {
-      //do something with portrait layout
-    }
-  },
+export default class AppScreen extends Component {
+  // ...
 
-  componentWillMount: function() {
-    //The getOrientation method is async. It happens sometimes that
-    //you need the orientation at the moment the js starts running on device.
-    //getInitialOrientation returns directly because its a constant set at the
-    //beginning of the js code.
-    var initial = Orientation.getInitialOrientation();
+  componentWillMount() {
+    // The getOrientation method is async. It happens sometimes that
+    // you need the orientation at the moment the JS runtime starts running on device.
+    // `getInitialOrientation` returns directly because its a constant set at the
+    // beginning of the JS runtime.
+
+    const initial = Orientation.getInitialOrientation();
     if (initial === 'PORTRAIT') {
-      //do stuff
+      // do something
     } else {
-      //do other stuff
+      // do something else
     }
   },
 
-  componentDidMount: function() {
-    Orientation.lockToPortrait(); //this will lock the view to Portrait
-    //Orientation.lockToLandscape(); //this will lock the view to Landscape
-    //Orientation.unlockAllOrientations(); //this will unlock the view to all Orientations
+  componentDidMount() {
+    // this locks the view to Portrait Mode
+    Orientation.lockToPortrait();
+
+    // this locks the view to Landscape Mode
+    // Orientation.lockToLandscape();
+
+    // this unlocks any previous locks to all Orientations
+    // Orientation.unlockAllOrientations();
 
     Orientation.addOrientationListener(this._orientationDidChange);
   },
 
-  componentWillUnmount: function() {
-    Orientation.getOrientation((err,orientation)=> {
-      console.log("Current Device Orientation: ", orientation);
+  _orientationDidChange = (orientation) => {
+    if (orientation === 'LANDSCAPE') {
+      // do something with landscape layout
+    } else {
+      // do something with portrait layout
+    }
+  },
+
+  componentWillUnmount() {
+    Orientation.getOrientation((err, orientation) => {
+      console.log(`Current Device Orientation: ${orientation}`);
     });
+
+
+    // Remember to remove listener
     Orientation.removeOrientationListener(this._orientationDidChange);
   }
+
+  render() {
+    // ...
+
+    return (
+      // ...
+    )
+  }
+}
 ```
 
-## Events
+## Orientation Events
 
-- `addOrientationListener(function(orientation))`
+```javascript
+addOrientationListener((orientation) => {});
+```
 
-orientation can return either `LANDSCAPE` `PORTRAIT` `UNKNOWN`
-also `PORTRAITUPSIDEDOWN` is now different from `PORTRAIT`
+`orientation` will return one of the following values:
+- `LANDSCAPE`
+- `PORTRAIT`
+- `PORTRAITUPSIDEDOWN`
+- `UNKNOWN`
 
-- `removeOrientationListener(function(orientation))`
+```javascript
+removeOrientationListener((orientation) => {});
+```
 
-- `addSpecificOrientationListener(function(specificOrientation))`
+```javascript
+addSpecificOrientationListener((specificOrientation) => {});
+```
 
-specificOrientation can return either `LANDSCAPE-LEFT` `LANDSCAPE-RIGHT` `PORTRAIT` `UNKNOWN` `PORTRAITUPSIDEDOWN`
+`specificOrientation` will return one of the following values:
+- `LANDSCAPE-LEFT`
+- `LANDSCAPE-RIGHT`
+- `PORTRAIT`
+- `PORTRAITUPSIDEDOWN`
+- `UNKNOWN`
 
-- `removeSpecificOrientationListener(function(specificOrientation))`
+```javascript
+removeSpecificOrientationListener((specificOrientation) => {});
+```
 
-## Functions
+## API
 
 - `lockToPortrait()`
 - `lockToLandscape()`
 - `lockToLandscapeLeft()`
 - `lockToLandscapeRight()`
 - `unlockAllOrientations()`
-- `getOrientation(function(err, orientation)`
-
-orientation can return either `LANDSCAPE` `PORTRAIT` `UNKNOWN` `PORTRAITUPSIDEDOWN`
-
-- `getSpecificOrientation(function(err, specificOrientation)`
-
-specificOrientation can return either `LANDSCAPE-LEFT` `LANDSCAPE-RIGHT` `PORTRAIT` `UNKNOWN` `PORTRAITUPSIDEDOWN`
-
-## TODOS
-
-- [x] Add some way to allow setting a preferred orientation on a screen by screen basis.
-- [x] Make API Cleaner to Orientation Locking
-- [x] Android Support
+- `getOrientation((err, orientation) => {})`
+- `getSpecificOrientation((err, specificOrientation) => {})`

@@ -112,7 +112,7 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
         if (activity == null) {
             return;
         }
-        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
     }
 
     @Override
@@ -146,7 +146,10 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
     public void onHostResume() {
         final Activity activity = getCurrentActivity();
 
-        assert activity != null;
+        if (activity == null) {
+            FLog.e(ReactConstants.TAG, "no activity to register receiver");
+            return;
+        }
         activity.registerReceiver(receiver, new IntentFilter("onConfigurationChanged"));
     }
     @Override
@@ -164,13 +167,6 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
 
     @Override
     public void onHostDestroy() {
-        final Activity activity = getCurrentActivity();
-        if (activity == null) return;
-        try
-        {
-            activity.unregisterReceiver(receiver);
+
         }
-        catch (java.lang.IllegalArgumentException e) {
-            FLog.e(ReactConstants.TAG, "receiver already unregistered", e);
-        }}
     }
